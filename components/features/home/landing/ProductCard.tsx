@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Star, Heart, Plus } from "lucide-react";
 
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ type ProductCardProps = {
 const ProductCard = ({ product }: ProductCardProps) => {
   const styles = homeLandingThemes.default;
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const { addToCart } = useCart();
   const favorited = isFavorite(product.title);
 
   const toggleFavorite = (e: React.MouseEvent) => {
@@ -101,7 +103,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           onClick={(e: React.MouseEvent) => { 
             e.preventDefault(); 
             e.stopPropagation();
-            alert(`${product.title} added to cart!`);
+            addToCart(product);
           }}
           className={cn("relative z-10 h-9 rounded-full px-4 text-xs transition-all hover:scale-105 active:scale-95", styles.productAction)}
           aria-label="Add to cart"

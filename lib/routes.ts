@@ -4,4 +4,5 @@ export const APP_ROUTES = {
   ABOUT: "/about",
   CONTACT: "/contact",
   FAVORITES: "/favorites",
+  PROFILE: "/profile",
 };

@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Heart,
-  Menu,
-  Search,
-  ShoppingBag,
-  UserRound,
-} from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { navbarThemes, type NavbarThemeName } from "./navbar-theme";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useCart } from "@/contexts/CartContext";
 
 type NavbarProps = {
   theme?: NavbarThemeName;
@@ -33,7 +28,7 @@ type NavbarProps = {
 const quickActions = [
   {
     label: "Account",
-    href: APP_ROUTES.HOME,
+    href: APP_ROUTES.PROFILE,
     icon: UserRound,
   },
   {
@@ -53,6 +48,10 @@ const quickActions = [
 const Navbar = ({ theme = "default" }: NavbarProps) => {
   const styles = navbarThemes[theme];
   const { favorites } = useFavorites();
+  const { setIsCartOpen, cartCount } = useCart();
+
+  // Mock authentication state for UI testing
+  const isAuthenticated = true;
 
   return (
     <nav className={cn("sticky top-0 z-40", styles.wrapper)}>
@@ -60,7 +59,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
         <div
           className={cn(
             "flex items-center gap-3 lg:gap-6 xl:gap-8",
-            styles.shell
+            styles.shell,
           )}
         >
           <Link
@@ -90,7 +89,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                     href={item.href}
                     className={cn(
                       styles.navLink,
-                      index === 0 && styles.navLinkActive
+                      index === 0 && styles.navLinkActive,
                     )}
                   >
                     {item.name}
@@ -103,10 +102,12 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
               <div
                 className={cn(
                   "flex h-12 items-center gap-2 rounded-full px-2.5",
-                  styles.searchWrapper
+                  styles.searchWrapper,
                 )}
               >
-                <Search className={cn("ml-1 size-4 shrink-0", styles.searchIcon)} />
+                <Search
+                  className={cn("ml-1 size-4 shrink-0", styles.searchIcon)}
+                />
                 <Input
                   type="search"
                   placeholder="Search products, collections, and inspirations"
@@ -122,10 +123,43 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
               </div>
             </div>
 
+            {/* Quick Actions */}
             <div className="flex shrink-0 items-center gap-2">
               {quickActions.map((action) => {
+                if (action.label === "Account" && !isAuthenticated) return null;
+
                 const Icon = action.icon;
-                const displayCount = action.label === "Wishlist" ? favorites.length : ("count" in action ? action.count : 0);
+
+                if (action.label === "Cart") {
+                  return (
+                    <Button
+                      key={action.label}
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "relative rounded-full",
+                        styles.utilityButton,
+                      )}
+                      onClick={() => setIsCartOpen(true)}
+                      aria-label="Open Cart"
+                    >
+                      <Icon className="size-[18px]" />
+                      {cartCount > 0 ? (
+                        <span
+                          className={cn(
+                            "absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
+                            styles.utilityBadge,
+                          )}
+                        >
+                          {cartCount}
+                        </span>
+                      ) : null}
+                    </Button>
+                  );
+                }
+
+                const displayCount =
+                  action.label === "Wishlist" ? favorites.length : 0;
 
                 return (
                   <Button
@@ -134,7 +168,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                     size="icon"
                     className={cn(
                       "relative rounded-full",
-                      styles.utilityButton
+                      styles.utilityButton,
                     )}
                     asChild
                   >
@@ -144,7 +178,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                         <span
                           className={cn(
                             "absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
-                            styles.utilityBadge
+                            styles.utilityBadge,
                           )}
                         >
                           {displayCount}
@@ -154,16 +188,21 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                   </Button>
                 );
               })}
-            </div>
 
-            <Button
-              className={cn(
-                "h-12 rounded-full px-5 text-sm",
-                styles.primaryButton
-              )}
-            >
-              Collections
-            </Button>
+              {!isAuthenticated ? (
+                <div className="hidden md:flex items-center gap-2 ml-1 pl-3 border-l border-slate-200 text-slate-900">
+                  <Button
+                    variant="ghost"
+                    className="rounded-full px-4 text-sm font-semibold hover:bg-slate-100"
+                  >
+                    Log in
+                  </Button>
+                  <Button className="rounded-full bg-slate-900 px-5 text-sm font-semibold text-white hover:bg-slate-800">
+                    Sign up
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="ml-auto flex items-center gap-2 lg:hidden">
@@ -171,19 +210,20 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
               variant="ghost"
               size="icon"
               className={cn("relative rounded-full", styles.utilityButton)}
-              asChild
+              onClick={() => setIsCartOpen(true)}
+              aria-label="Cart"
             >
-              <Link href={APP_ROUTES.HOME} aria-label="Cart">
-                <ShoppingBag className="size-5" />
+              <ShoppingBag className="size-5" />
+              {cartCount > 0 ? (
                 <span
                   className={cn(
                     "absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
-                    styles.utilityBadge
+                    styles.utilityBadge,
                   )}
                 >
-                  3
+                  {cartCount}
                 </span>
-              </Link>
+              ) : null}
             </Button>
 
             <Drawer direction="right">
@@ -203,7 +243,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                       <span
                         className={cn(
                           "flex size-10 items-center justify-center rounded-2xl text-xs font-semibold uppercase tracking-[0.24em]",
-                          styles.logoBadge
+                          styles.logoBadge,
                         )}
                       >
                         MM
@@ -221,10 +261,12 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                     <div
                       className={cn(
                         "flex h-12 items-center gap-2 rounded-full px-3",
-                        styles.searchWrapper
+                        styles.searchWrapper,
                       )}
                     >
-                      <Search className={cn("size-4 shrink-0", styles.searchIcon)} />
+                      <Search
+                        className={cn("size-4 shrink-0", styles.searchIcon)}
+                      />
                       <Input
                         type="search"
                         placeholder="Search the catalog"
@@ -237,7 +279,10 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                     {NAVIGATION_MENU.map((item) => (
                       <li key={item.name}>
                         <DrawerClose asChild>
-                          <Link href={item.href} className={styles.mobileNavLink}>
+                          <Link
+                            href={item.href}
+                            className={styles.mobileNavLink}
+                          >
                             {item.name}
                           </Link>
                         </DrawerClose>
@@ -247,8 +292,42 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
 
                   <div className="grid grid-cols-3 gap-3">
                     {quickActions.map((action) => {
+                      if (action.label === "Account" && !isAuthenticated)
+                        return null;
+
                       const Icon = action.icon;
-                      const displayCount = action.label === "Wishlist" ? favorites.length : ("count" in action ? action.count : 0);
+
+                      if (action.label === "Cart") {
+                        return (
+                          <DrawerClose asChild key={action.label}>
+                            <Button
+                              variant="ghost"
+                              className={cn(
+                                "relative h-16 rounded-2xl px-3 text-xs flex-col gap-1.5",
+                                styles.mobileUtilityItem,
+                              )}
+                              onClick={() => setIsCartOpen(true)}
+                              aria-label="Open Cart"
+                            >
+                              <Icon className="size-4" />
+                              <span>{action.label}</span>
+                              {cartCount > 0 ? (
+                                <span
+                                  className={cn(
+                                    "absolute right-2 top-2 flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
+                                    styles.utilityBadge,
+                                  )}
+                                >
+                                  {cartCount}
+                                </span>
+                              ) : null}
+                            </Button>
+                          </DrawerClose>
+                        );
+                      }
+
+                      const displayCount =
+                        action.label === "Wishlist" ? favorites.length : 0;
 
                       return (
                         <DrawerClose asChild key={action.label}>
@@ -256,7 +335,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                             variant="ghost"
                             className={cn(
                               "relative h-16 rounded-2xl px-3 text-xs",
-                              styles.mobileUtilityItem
+                              styles.mobileUtilityItem,
                             )}
                             asChild
                           >
@@ -271,7 +350,7 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                                 <span
                                   className={cn(
                                     "absolute right-2 top-2 flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
-                                    styles.utilityBadge
+                                    styles.utilityBadge,
                                   )}
                                 >
                                   {displayCount}
@@ -284,13 +363,19 @@ const Navbar = ({ theme = "default" }: NavbarProps) => {
                     })}
                   </div>
 
-                  <DrawerClose asChild>
-                    <Button
-                      className={cn("h-12 w-full rounded-full", styles.primaryButton)}
-                    >
-                      Collections
-                    </Button>
-                  </DrawerClose>
+                  {!isAuthenticated ? (
+                    <div className="flex flex-col gap-3 mt-4">
+                      <Button className="w-full rounded-full bg-slate-900 text-white h-12 font-medium">
+                        Sign up
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full h-12 border-slate-200 font-medium"
+                      >
+                        Log in
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               </DrawerContent>
             </Drawer>

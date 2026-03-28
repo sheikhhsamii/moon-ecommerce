@@ -3,6 +3,8 @@ import "@/styles/globals.css";
 import Navbar from "@/components/common/navbar/Navbar";
 import Footer from "@/components/common/footer/Footer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { CartDrawer } from "@/components/common/cart/CartDrawer";
 
 export const metadata: Metadata = {
   title: "Moon Ceramic & Furniture Store",
@@ -17,11 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <FavoritesProvider>
-          <Navbar />
-          <div className="flex-1">{children}</div>
-          <Footer />
-        </FavoritesProvider>
+        <CartProvider>
+          <FavoritesProvider>
+            <Navbar />
+            <div className="flex-1">{children}</div>
+            <Footer />
+            <CartDrawer />
+          </FavoritesProvider>
+        </CartProvider>
       </body>
     </html>
   );
